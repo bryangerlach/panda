@@ -80,8 +80,8 @@ const CanMsg HYUNDAI_CAMERA_SCC_LONG_TX_MSGS[] = {
   {.msg = {{0x421, (scc_bus), 8, .check_checksum = !(can_canfd_hybrid), .max_counter = 15U, .frequency = 50U}, { 0 }, { 0 }}}, \
 
 RxCheck hyundai_rx_checks[] = {
-   HYUNDAI_COMMON_RX_CHECKS(false)
-      HYUNDAI_SCC12_ADDR_CHECK(0, false)
+  HYUNDAI_COMMON_RX_CHECKS(false)
+  HYUNDAI_SCC12_ADDR_CHECK(0, false)
 };
 
 RxCheck hyundai_can_canfd_hybrid_rx_checks[] = {
