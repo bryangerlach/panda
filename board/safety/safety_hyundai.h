@@ -114,10 +114,9 @@ RxCheck hyundai_non_scc_addr_checks[] = {
   {.msg = {{0x386, 0, 8, .check_checksum = true, .max_counter = 15U, .frequency = 100U}, { 0 }, { 0 }}},
 };
 
-const int HYUNDAI_PARAM_CAN_CANFD = 256;
-const int HYUNDAI_PARAM_LFA_BTN = 512;
-const int HYUNDAI_PARAM_ESCC = 1024;
-const int HYUNDAI_PARAM_NON_SCC = 2048;
+const int HYUNDAI_PARAM_LFA_BTN = 256;
+const int HYUNDAI_PARAM_ESCC = 512;
+const int HYUNDAI_PARAM_NON_SCC = 1024;
 
 bool hyundai_legacy = false;
 bool hyundai_can_canfd_hybrid = false;
@@ -413,7 +412,7 @@ static int hyundai_fwd_hook(int bus_num, int addr) {
 static safety_config hyundai_init(uint16_t param) {
   hyundai_common_init(param);
   hyundai_legacy = false;
-  hyundai_can_canfd_hybrid = GET_FLAG(param, HYUNDAI_PARAM_CAN_CANFD);
+  hyundai_can_canfd_hybrid = true;
 
   if (hyundai_can_canfd_hybrid) {
     gen_crc_lookup_table_16(0x1021, hyundai_canfd_crc_lut);
