@@ -328,7 +328,7 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
 
     if ((CR_VSM_DecCmd != 0) || FCA_CmdAct || CF_VSM_DecCmdAct) {
       tx = false;
-      print("tx false 1")
+      print("tx false 1");
     }
   }
 
@@ -351,7 +351,7 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
 
     if (violation) {
       tx = false;
-      print("tx false 2")
+      print("tx false 2");
     }
   }
 
@@ -363,7 +363,7 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
     const SteeringLimits limits = hyundai_can_canfd_hybrid ? HYUNDAI_STEERING_LIMITS_CAN_CANFD_HYBRID : (hyundai_alt_limits ? HYUNDAI_STEERING_LIMITS_ALT : HYUNDAI_STEERING_LIMITS);
     if (steer_torque_cmd_checks(desired_torque, steer_req, limits)) {
       tx = false;
-      print("tx false 3")
+      print("tx false 3");
     }
   }
 
@@ -371,7 +371,7 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
   if ((addr == 0x7D0) && !hyundai_escc && !hyundai_camera_scc) {
     if ((GET_BYTES(to_send, 0, 4) != 0x00803E02U) || (GET_BYTES(to_send, 4, 4) != 0x0U)) {
       tx = false;
-      print("tx false 4")
+      print("tx false 4");
     }
   }
 
@@ -384,7 +384,7 @@ static bool hyundai_tx_hook(const CANPacket_t *to_send) {
     bool allowed_cancel = (button == 4) && cruise_engaged_prev;
     if (!(allowed_resume || allowed_set || allowed_cancel)) {
       tx = false;
-      print("tx false 5")
+      print("tx false 5");
     }
   }
 
