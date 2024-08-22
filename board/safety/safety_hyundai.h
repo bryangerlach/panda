@@ -258,11 +258,13 @@ static void hyundai_rx_hook(const CANPacket_t *to_push) {
             controls_allowed = true;
           }
           if (!main_enabled && main_enabled_prev) {
+            print("not main enabled and main enabled prev");
             disengageFromBrakes = false;
             controls_allowed = false;
             controls_allowed_long = false;
           }
         }
+        print("safety_hyundai.h");
         main_button_prev = main_button;
         main_enabled_prev = main_enabled;
       }

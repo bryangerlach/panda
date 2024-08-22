@@ -186,6 +186,7 @@ void safety_tick(const safety_config *cfg) {
         disengageFromBrakes = false;
         controls_allowed = false;
         controls_allowed_long = false;
+        print("is lagging - yes");
       }
 
       if (lagging || !is_msg_valid(cfg->rx_checks, i)) {
@@ -214,6 +215,7 @@ bool is_msg_valid(RxCheck addr_list[], int index) {
       disengageFromBrakes = false;
       controls_allowed = false;
       controls_allowed_long = false;
+      print("is message valid - no");
     }
   }
   return valid;

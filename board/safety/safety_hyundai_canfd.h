@@ -246,7 +246,6 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
 
     if (steer_torque_cmd_checks(desired_torque, steer_req, HYUNDAI_CANFD_STEERING_LIMITS)) {
       tx = false;
-      print("tx false 1");
     }
   }
 
@@ -260,7 +259,6 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
     bool allowed = (is_cancel && cruise_engaged_prev) || ((is_resume || is_set) && controls_allowed && controls_allowed_long);
     if (!allowed) {
       tx = false;
-      print("tx false 2");
     }
   }
 
@@ -268,7 +266,6 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
   if ((addr == 0x730) && hyundai_canfd_hda2) {
     if ((GET_BYTES(to_send, 0, 4) != 0x00803E02U) || (GET_BYTES(to_send, 4, 4) != 0x0U)) {
       tx = false;
-      print("tx false 3");
     }
   }
 
@@ -291,7 +288,6 @@ static bool hyundai_canfd_tx_hook(const CANPacket_t *to_send) {
 
     if (violation) {
       tx = false;
-      print("tx false 4");
     }
   }
 

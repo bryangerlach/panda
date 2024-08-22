@@ -9,6 +9,7 @@ void mads_acc_main_check(const bool main_on) {
     disengageFromBrakes = false;
     controls_allowed = false;
     controls_allowed_long = false;
+    print("sunny safety 0");
   }
   acc_main_on_prev = main_on;
 }
@@ -24,12 +25,14 @@ void mads_exit_controls_check(void) {
   if (alternative_experience & ALT_EXP_MADS_DISABLE_DISENGAGE_LATERAL_ON_BRAKE) {
     disengageFromBrakes = true;
     controls_allowed_long = false;
+    print("sunny safety 1");
   } else {
     if ((alternative_experience & ALT_EXP_ENABLE_MADS) && controls_allowed) {
       disengageFromBrakes = true;
     }
     controls_allowed = false;
     controls_allowed_long = false;
+    print("sunny safety 2");
   }
 }
 
