@@ -90,28 +90,20 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   if (bus_num == 2) {
     // SCC11: Forward radar points to sunnypilot/openpilot
     if (addr == 1056) {
-      obj_valid = (GET_BYTE(to_fwd, 2) & 0x1U);
-      acc_objstatus = ((GET_BYTE(to_fwd, 2) >> 6) & 0x3U);
-      acc_obj_lat_pos_1 = GET_BYTE(to_fwd, 3);
-      acc_obj_lat_pos_2 = (GET_BYTE(to_fwd, 4) & 0x1U);
-      acc_obj_dist_1 = ((GET_BYTE(to_fwd, 4) >> 1) & 0x7FU);
-      acc_obj_dist_2 = (GET_BYTE(to_fwd, 5) & 0xFU);
-      acc_obj_rel_spd_1 = ((GET_BYTE(to_fwd, 5) >> 4) & 0xFU);
-      acc_obj_rel_spd_2 = GET_BYTE(to_fwd, 6);
+      obj_valid = (GET_BYTE(to_fwd, 7) >> 3) & 0x1U;
     }
     // SCC12: Detect AEB, override and forward is_scc_msg
     if (addr == 1057) {
-      aeb_cmd_act = (GET_BYTE(to_fwd, 6) >> 6) & 1U;
-      cf_vsm_warn_scc12 = ((GET_BYTE(to_fwd, 0) >> 4) & 0x3U);
-      cf_vsm_deccmdact_scc12 = (GET_BYTE(to_fwd, 0) >> 1) & 1U;
-      cr_vsm_deccmd_scc12 = GET_BYTE(to_fwd, 2);
+      uint16_t dist_raw = (GET_BYTE(to_fwd, 2) | ((GET_BYTE(to_fwd, 3) & 0x07) << 8));
+      acc_obj_dist_1 = dist_raw & 0x7F;
+      acc_obj_dist_2 = dist_raw >> 7;
     }
     // FCA11: Detect AEB, override and forward is_scc_msg
-    if (addr == 909) {
-      fca_cmd_act = (GET_BYTE(to_fwd, 2) >> 4) & 1U;
-      cf_vsm_warn_fca11 = ((GET_BYTE(to_fwd, 0) >> 3) & 0x3U);
-      cf_vsm_deccmdact_fca11 = ((GET_BYTE(to_fwd, 3) >> 7) & 1U);
-      cr_vsm_deccmd_fca11 = GET_BYTE(to_fwd, 1);
+    if (addr == 905) {
+      uint16_t lat_raw = (GET_BYTE(to_fwd, 2) | ((GET_BYTE(to_fwd, 3) & 0x01) << 8));
+      acc_obj_lat_pos_1 = lat_raw & 0xFF;
+      acc_obj_lat_pos_2 = (lat_raw >> 8) & 0x1;
+      acc_objstatus = (GET_BYTE(to_fwd, 6) >> 3) & 0x7U;
     }
     escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
     int block_msg = (block && is_scc_msg);
