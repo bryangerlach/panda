@@ -25,32 +25,23 @@ static void escc_rx_hook(const CANPacket_t* to_push) {
     switch (addr) {
       // This messsage is blocked if scc_block_allowed is true, and ESCC is updated with the data and sent to sunnypilot
       case 0x420: // SCC11: Forward radar points to sunnypilot
-        escc.obj_valid = (GET_BYTE(to_push, 2) & 0x1U);
-        escc.acc_objstatus = ((GET_BYTE(to_push, 2) >> 6) & 0x3U);
-        escc.acc_obj_lat_pos_1 = GET_BYTE(to_push, 3);
-        escc.acc_obj_lat_pos_2 = (GET_BYTE(to_push, 4) & 0x1U);
-        escc.acc_obj_dist_1 = ((GET_BYTE(to_push, 4) >> 1) & 0x7FU);
-        escc.acc_obj_dist_2 = (GET_BYTE(to_push, 5) & 0xFU);
-        escc.acc_obj_rel_spd_1 = ((GET_BYTE(to_push, 5) >> 4) & 0xFU);
-        escc.acc_obj_rel_spd_2 = GET_BYTE(to_push, 6);
+        escc.obj_valid = (GET_BYTE(to_push, 7) >> 3) & 0x1U;
         send_escc_msg(&escc, CAR_BUS);
         break;
 
       // This messsage is blocked if scc_block_allowed is true, and ESCC is updated with the data and sent to sunnypilot
       case 0x421: // SCC12: Detect AEB, get the data and write it on the next ESCC msg to sunnypilot.
-        escc.aeb_cmd_act = GET_BYTE(to_push, 6) >> 6 & 1U;
-        escc.cf_vsm_warn_scc12 = GET_BYTE(to_push, 0) >> 4 & 0x3U;
-        escc.cf_vsm_deccmdact_scc12 = GET_BYTE(to_push, 0) >> 1 & 1U;
-        escc.cr_vsm_deccmd_scc12 = GET_BYTE(to_push, 2);
+        uint16_t dist_raw = (GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0x07) << 8));
+        escc.acc_obj_dist_1 = dist_raw & 0x7F;
+        escc.acc_obj_dist_2 = dist_raw >> 7;
         break;
 
-      // This message is not blocked, and is sent straight to the car.
-      case 0x38D: // FCA11: Detect AEB, get the data and write it on the next ESCC msg to sunnypilot
-        escc.fca_cmd_act = GET_BYTE(to_push, 2) >> 4 & 1U;
-        escc.cf_vsm_warn_fca11 = GET_BYTE(to_push, 0) >> 3 & 0x3U;
-        escc.cf_vsm_deccmdact_fca11 = GET_BYTE(to_push, 3) >> 7 & 1U;
-        escc.cr_vsm_deccmd_fca11 = GET_BYTE(to_push, 1);
-        break;
+      // This message is blocked if scc_block_allowed is true, and ESCC is updated with the data and sent to sunnypilot
+      case 0x389:
+        uint16_t lat_raw = (GET_BYTE(to_push, 2) | ((GET_BYTE(to_push, 3) & 0x01) << 8));
+        escc.acc_obj_lat_pos_1 = lat_raw & 0xFF;
+        escc.acc_obj_lat_pos_2 = (lat_raw >> 8) & 0x1;
+        escc.acc_objstatus = (GET_BYTE(to_push, 6) >> 3) & 0x7U;
 
       default: ;
     }
