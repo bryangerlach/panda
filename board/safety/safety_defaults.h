@@ -54,7 +54,7 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
 
   int is_scc_msg = ((addr == 1056) || (addr == 1057) || (addr == 1290) || (addr == 905));  // SCC11 || SCC12 || SCC13 || SCC14
 
-  if (bus_num == 0) {
+  if (bus_num == 2) {
     uint32_t ts = TIM2->CNT;
     uint32_t ts_elapsed = get_ts_elapsed(ts, sunnypilot_detected_last);
     // Stop blocking if we stop receiving messages from sunnypilot/openpilot after 150000
@@ -66,9 +66,9 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       block = 1;
       sunnypilot_detected_last = ts;
     }
-    bus_fwd = 2;
+    bus_fwd = 0;
   }
-  if (bus_num == 2) {
+  if (bus_num == 0) {
     // SCC11: Forward radar points to sunnypilot/openpilot
     if (addr == 1056) {
       obj_valid = (GET_BYTE(to_fwd, 7) >> 3) & 0x1U;
@@ -101,7 +101,7 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
     int block_msg = (block && is_scc_msg);
     if (!block_msg) {
-      bus_fwd = 0;
+      bus_fwd = 2;
     }
   }
   return bus_fwd;
