@@ -45,7 +45,7 @@ uint32_t ignition_can_cnt = 0U;
 int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_SILENT;
 
 #define CAN_ESCC_INPUT  0x2AC
-#define CAN_ESCC_OUTPUT 0x2ABU
+#define CAN_ESCC_OUTPUT 0x422U
 
 // ********************* instantiate queues *********************
 
