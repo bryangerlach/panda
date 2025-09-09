@@ -1,18 +1,3 @@
-void smdps_clu11(void);
-
-static void send_mdps_enable_speed(CAN_FIFOMailBox_TypeDef *to_fwd){
-  bool is_speed_unit_mph = GET_BYTE(to_fwd, 2) & 0x2;
-
-  int mdps_cutoff_speed = is_speed_unit_mph ? 76 : 120;  // factor of 2 from dbc
-
-  int veh_clu_speed = GET_BYTE(to_fwd, 1) | (GET_BYTE(to_fwd, 2) & 0x1) << 8;
-
-  if (veh_clu_speed < mdps_cutoff_speed) {
-    to_fwd->RDLR &= 0xFFFE00FF;
-    to_fwd->RDLR |= mdps_cutoff_speed << 8;
-  }
-};
-
 int default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   UNUSED(to_push);
   return true;
