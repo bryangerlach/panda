@@ -82,10 +82,6 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       sunnypilot_detected_last = ts;
     }
     bus_fwd = 2;
-    if (addr == 1265) {
-      send_mdps_enable_speed(to_fwd);
-    }
-    smdps_clu11();
   }
   if (bus_num == 2) {
     // SCC11: Forward radar points to sunnypilot/openpilot
@@ -109,12 +105,12 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     if (addr == 909) {
       fca_cmd_act = (GET_BYTE(to_fwd, 2) >> 3) & 0x1U;
       aeb_cmd_act = GET_BYTE(to_fwd, 2) & 0x1U;
-      int8_t raw_deccmd = GET_BYTE(to_fwd, 6) & 0x7FU;
-      cr_vsm_deccmd_fca11 = raw_deccmd - 127;
-      uint8_t cf_vsm_warn_1 = (GET_BYTE(to_fwd, 6) >> 7) & 0x1U;
-      uint8_t cf_vsm_warn_2 = (GET_BYTE(to_fwd, 7) >> 1) & 0x1U;
-      uint8_t cf_vsm_warn_3 = (GET_BYTE(to_fwd, 7) >> 6) & 0x1U;
-      cf_vsm_warn_fca11 = cf_vsm_warn_1 | cf_vsm_warn_2 | cf_vsm_warn_3;
+      //int8_t raw_deccmd = GET_BYTE(to_fwd, 6) & 0x7FU;
+      //cr_vsm_deccmd_fca11 = raw_deccmd - 127;
+      //uint8_t cf_vsm_warn_1 = (GET_BYTE(to_fwd, 6) >> 7) & 0x1U;
+      //uint8_t cf_vsm_warn_2 = (GET_BYTE(to_fwd, 7) >> 1) & 0x1U;
+      //uint8_t cf_vsm_warn_3 = (GET_BYTE(to_fwd, 7) >> 6) & 0x1U;
+      //cf_vsm_warn_fca11 = cf_vsm_warn_1 | cf_vsm_warn_2 | cf_vsm_warn_3;
       //cf_vsm_deccmdact_fca11 = ((GET_BYTE(to_fwd, 4) >> 6) & 0x3U) | ((GET_BYTE(to_fwd, 5) & 0x7FU) << 2);
     }
     escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
