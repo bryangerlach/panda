@@ -123,10 +123,10 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   dat[5] = (acc_obj_dist_2) | (acc_obj_rel_spd_1 << 4);
   dat[6] = (acc_obj_rel_spd_2);
   dat[7] = (cr_vsm_deccmd_fca11);
-  CAN1->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
-  CAN1->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
-  CAN1->sTxMailBox[0].TDTR = 8;
-  CAN1->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | 1U;
+  CAN3->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+  CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+  CAN3->sTxMailBox[0].TDTR = 8;
+  CAN3->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | 1U;
 }
 
 // ****************************** safety mode ******************************
