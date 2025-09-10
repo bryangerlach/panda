@@ -137,12 +137,12 @@ void count_message(void) {
   dat[6] = can_overflow_cnt & 0xFF;
   dat[7] = (can_overflow_cnt >> 8) & 0xFF;
 
-  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+  if ((CAN3->TSR & CAN_TSR_TME1) == 0) return;  // use mailbox 1, skip if busy
 
   CAN3->sTxMailBox[1].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
   CAN3->sTxMailBox[1].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
   CAN3->sTxMailBox[1].TDTR = 8;
-  CAN3->sTxMailBox[1].TIR = (CAN_COUNT_OUTPUT << 21) | CAN_TI0R_TXRQ;
+  CAN3->sTxMailBox[1].TIR = (CAN_COUNT_OUTPUT << 21) | CAN_TI1R_TXRQ;
 }
 
 // ****************************** safety mode ******************************
