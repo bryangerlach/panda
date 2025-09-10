@@ -126,7 +126,7 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
 }
 
-void count_message() {
+void count_message(void) {
   uint8_t dat[8] = {0};
   dat[0] = can_rx_cnt & 0xFF;
   dat[1] = (can_rx_cnt >> 8) & 0xFF;
