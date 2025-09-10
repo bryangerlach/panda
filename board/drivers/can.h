@@ -46,6 +46,7 @@ int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_S
 
 #define CAN_ESCC_INPUT  0x2AC
 #define CAN_ESCC_OUTPUT 0x2ABU
+#define CAN_COUNT_OUTPUT 0x2ADU
 
 // ********************* instantiate queues *********************
 
@@ -489,6 +490,7 @@ bool can_init(uint8_t can_number) {
   REGISTER_INTERRUPT(CAN3_SCE_IRQn, CAN3_SCE_IRQ_Handler, CAN_INTERRUPT_RATE, FAULT_INTERRUPT_RATE_CAN_3)
 
   if (can_number != 0xffU) {
+    ret = true;
     CAN_TypeDef *CAN = CANIF_FROM_CAN_NUM(can_number);
     ret &= can_set_speed(can_number);
     ret &= llcan_init(CAN);

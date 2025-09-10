@@ -117,12 +117,32 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   dat[5] = (acc_obj_dist_2) | (acc_obj_rel_spd_1 << 4);
   dat[6] = (acc_obj_rel_spd_2);
   dat[7] = (cr_vsm_deccmd_fca11);
-  if (CAN3->TSR & CAN_TSR_TME0) {
-    CAN3->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
-    CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
-    CAN3->sTxMailBox[0].TDTR = 8;
-    CAN3->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
-  }
+
+  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+
+  CAN3->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+  CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+  CAN3->sTxMailBox[0].TDTR = 8;
+  CAN3->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
+}
+
+void count_message() {
+  uint8_t dat[8] = {0};
+  dat[0] = can_rx_cnt & 0xFF;
+  dat[1] = (can_rx_cnt >> 8) & 0xFF;
+  dat[2] = can_tx_cnt & 0xFF;
+  dat[3] = (can_tx_cnt >> 8) & 0xFF;
+  dat[4] = can_err_cnt & 0xFF;
+  dat[5] = (can_err_cnt >> 8) & 0xFF;
+  dat[6] = can_overflow_cnt & 0xFF;
+  dat[7] = (can_overflow_cnt >> 8) & 0xFF;
+
+  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+
+  CAN3->sTxMailBox[1].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+  CAN3->sTxMailBox[1].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+  CAN3->sTxMailBox[1].TDTR = 8;
+  CAN3->sTxMailBox[1].TIR = (CAN_COUNT_OUTPUT << 21) | CAN_TI0R_TXRQ;
 }
 
 // ****************************** safety mode ******************************
