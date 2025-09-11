@@ -41,7 +41,11 @@
 #include "drivers/can.h"
 
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
-extern uint32_t last_can_activity;
+
+uint32_t last_escc_activity = 0;
+uint8_t escc_watchdog_fail_count = 0;
+#define ESCC_WATCHDOG_TIMEOUT 20000U  // ~50ms (adjust as needed)
+#define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
 void watchdog_check(void);
 
 struct __attribute__((packed)) health_t {
@@ -107,11 +111,25 @@ void debug_ring_callback(uart_ring *ring) {
 }
 
 void watchdog_check(void) {
-  uint32_t now = TIM2->CNT;
-  if (get_ts_elapsed(now, last_can_activity) > 100000U) {  // ~100ms no activity
-    can_init(2);              // reinitialize CAN3
-    last_can_activity = now;     // reset timer
-  }
+    uint32_t now = TIM2->CNT;
+    uint32_t ts_elapsed = get_ts_elapsed(now, last_escc_activity);
+
+    if (ts_elapsed > ESCC_WATCHDOG_TIMEOUT) {
+        // Increment fail count
+        escc_watchdog_fail_count++;
+
+        // Attempt to recover CAN first
+        can_init(2);
+
+        // If ESCC still unresponsive after max retries, reset MCU
+        if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
+            puts("ESCC unresponsive. Rebooting MCU...\n");
+            NVIC_SystemReset();  // full reset
+        }
+    } else {
+        // ESCC is alive, reset counter
+        escc_watchdog_fail_count = 0;
+    }
 }
 
 void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11, uint8_t cf_vsm_warn_scc12, uint8_t cf_vsm_deccmdact_scc12, uint8_t cf_vsm_deccmdact_fca11, uint8_t cr_vsm_deccmd_scc12, uint8_t cr_vsm_deccmd_fca11,
@@ -121,7 +139,7 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   uint8_t dat[8] = {0};
   dat[0] = (fca_cmd_act) | (cf_vsm_warn_fca11 << 1) | (aeb_cmd_act << 3) | (cf_vsm_warn_scc12 << 4) | (cf_vsm_deccmdact_scc12 << 6) | (cf_vsm_deccmdact_fca11 << 7);
   dat[1] = (cr_vsm_deccmd_scc12);
-  dat[2] = (obj_valid) | (acc_objstatus << 1);
+  dat[2] = (obj_valid) | (acc_objstatus << 1) | (escc_watchdog_fail_count << 5);
   dat[3] = (acc_obj_lat_pos_1);
   dat[4] = (acc_obj_lat_pos_2) | (acc_obj_dist_1 << 1);
   dat[5] = (acc_obj_dist_2) | (acc_obj_rel_spd_1 << 4);
@@ -134,25 +152,7 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
   CAN3->sTxMailBox[0].TDTR = 8;
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
-}
-
-void count_message(void) {
-  uint8_t dat[8] = {0};
-  dat[0] = can_rx_cnt & 0xFF;
-  dat[1] = (can_rx_cnt >> 8) & 0xFF;
-  dat[2] = can_tx_cnt & 0xFF;
-  dat[3] = (can_tx_cnt >> 8) & 0xFF;
-  dat[4] = can_err_cnt & 0xFF;
-  dat[5] = (can_err_cnt >> 8) & 0xFF;
-  dat[6] = can_overflow_cnt & 0xFF;
-  dat[7] = (can_overflow_cnt >> 8) & 0xFF;
-
-  if ((CAN3->TSR & CAN_TSR_TME1) == 0) return;  // use mailbox 1, skip if busy
-
-  CAN3->sTxMailBox[1].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
-  CAN3->sTxMailBox[1].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
-  CAN3->sTxMailBox[1].TDTR = 8;
-  CAN3->sTxMailBox[1].TIR = (CAN_COUNT_OUTPUT << 21) | CAN_TI1R_TXRQ;
+  last_escc_activity = TIM2->CNT;
 }
 
 // ****************************** safety mode ******************************

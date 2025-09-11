@@ -1,7 +1,5 @@
-uint32_t last_can_activity = 0;
 
 int default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
-  last_can_activity = TIM2->CNT;
   UNUSED(to_push);
   return true;
 }
@@ -14,7 +12,6 @@ uint32_t sunnypilot_detected_last = 0;
 void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11, uint8_t cf_vsm_warn_scc12, uint8_t cf_vsm_deccmdact_scc12, uint8_t cf_vsm_deccmdact_fca11, uint8_t cr_vsm_deccmd_scc12, uint8_t cr_vsm_deccmd_fca11,
              uint8_t obj_valid, uint8_t acc_objstatus, uint8_t acc_obj_lat_pos_1, uint8_t acc_obj_lat_pos_2, uint8_t acc_obj_dist_1,
              uint8_t acc_obj_dist_2, uint8_t acc_obj_rel_spd_1, uint8_t acc_obj_rel_spd_2);
-void count_message(void);
 
 // *** no output safety mode ***
 
@@ -25,7 +22,6 @@ static void nooutput_init(int16_t param) {
 }
 
 static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
-  last_can_activity = TIM2->CNT;
   UNUSED(to_send);
   return false;
 }
@@ -91,7 +87,7 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       uint16_t lat_raw = (GET_BYTE(to_fwd, 2) | ((GET_BYTE(to_fwd, 3) & 0x01) << 8));
       acc_obj_lat_pos_1 = lat_raw & 0xFF;
       acc_obj_lat_pos_2 = (lat_raw >> 8) & 0x1;
-      acc_objstatus = (GET_BYTE(to_fwd, 6) >> 3) & 0x7U;
+      acc_objstatus = (GET_BYTE(to_fwd, 6) >> 3) & 0x3U;
     }
     // FCA11: Detect AEB, override and forward is_scc_msg
     if (addr == 909) {
@@ -110,7 +106,6 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     uint32_t ts_elapsed = get_ts_elapsed(ts, last_escc_send);
     if (ts_elapsed > 16000U) {
       escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
-      count_message();
       last_escc_send = ts;
     }
 
