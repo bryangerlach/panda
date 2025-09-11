@@ -1,3 +1,5 @@
+uint32_t last_can_activity = 0;
+
 int default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   last_can_activity = TIM2->CNT;
   UNUSED(to_push);
@@ -7,7 +9,6 @@ int default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
 int block = 0;
 uint32_t last_escc_send = 0;
 uint32_t sunnypilot_detected_last = 0;
-uint32_t last_can_activity = 0;
 
 // Custom ID for ESCC fingerprinting, lead car info (not radar tracks), AEB/FCW signals
 void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11, uint8_t cf_vsm_warn_scc12, uint8_t cf_vsm_deccmdact_scc12, uint8_t cf_vsm_deccmdact_fca11, uint8_t cr_vsm_deccmd_scc12, uint8_t cr_vsm_deccmd_fca11,
