@@ -44,8 +44,6 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 extern uint32_t last_can_activity;
 void watchdog_check(void);
 
-uint32_t last_can_activity = 0;
-
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
   uint32_t voltage_pkt;
@@ -111,7 +109,7 @@ void debug_ring_callback(uart_ring *ring) {
 void watchdog_check(void) {
   uint32_t now = TIM2->CNT;
   if (get_ts_elapsed(now, last_can_activity) > 100000U) {  // ~100ms no activity
-    can_init(CAN3);              // reinitialize CAN3
+    can_init(2);              // reinitialize CAN3
     last_can_activity = now;     // reset timer
   }
 }
@@ -751,7 +749,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       #endif
 
       watchdog_check();
-      
+
       // Tick drivers
       fan_tick();
 
