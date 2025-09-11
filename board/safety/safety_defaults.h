@@ -1,9 +1,11 @@
 int default_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
+  last_can_activity = TIM2->CNT;
   UNUSED(to_push);
   return true;
 }
 
 int block = 0;
+uint32_t last_escc_send = 0;
 uint32_t sunnypilot_detected_last = 0;
 // Custom ID for ESCC fingerprinting, lead car info (not radar tracks), AEB/FCW signals
 void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11, uint8_t cf_vsm_warn_scc12, uint8_t cf_vsm_deccmdact_scc12, uint8_t cf_vsm_deccmdact_fca11, uint8_t cr_vsm_deccmd_scc12, uint8_t cr_vsm_deccmd_fca11,
@@ -20,6 +22,7 @@ static void nooutput_init(int16_t param) {
 }
 
 static int nooutput_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
+  last_can_activity = TIM2->CNT;
   UNUSED(to_send);
   return false;
 }
@@ -99,8 +102,14 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       //cf_vsm_warn_fca11 = cf_vsm_warn_1 | cf_vsm_warn_2 | cf_vsm_warn_3;
       //cf_vsm_deccmdact_fca11 = ((GET_BYTE(to_fwd, 4) >> 6) & 0x3U) | ((GET_BYTE(to_fwd, 5) & 0x7FU) << 2);
     }
-    escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
-    count_message();
+
+    uint32_t ts = TIM2->CNT;
+    uint32_t ts_elapsed = get_ts_elapsed(ts, last_escc_send);
+    if (ts_elapsed > 20000U) {
+      escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
+      count_message();
+    }
+
     int block_msg = (block && is_scc_msg);
     if (!block_msg) {
       bus_fwd = 0;
