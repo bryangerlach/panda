@@ -119,13 +119,13 @@ void watchdog_check(void) {
         escc_watchdog_fail_count++;
 
         // Attempt to recover CAN first
-        can_init(2);
+        can_init_all();
 
         // If ESCC still unresponsive after max retries, reset MCU
-        if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
-            puts("ESCC unresponsive. Rebooting MCU...\n");
-            NVIC_SystemReset();  // full reset
-        }
+        // if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
+        //     puts("ESCC unresponsive. Rebooting MCU...\n");
+        //     NVIC_SystemReset();  // full reset
+        // }
     } else {
         // ESCC is alive, reset counter
         escc_watchdog_fail_count = 0;
@@ -139,7 +139,7 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   uint8_t dat[8] = {0};
   dat[0] = (fca_cmd_act) | (cf_vsm_warn_fca11 << 1) | (aeb_cmd_act << 3) | (cf_vsm_warn_scc12 << 4) | (cf_vsm_deccmdact_scc12 << 6) | (cf_vsm_deccmdact_fca11 << 7);
   dat[1] = (cr_vsm_deccmd_scc12);
-  dat[2] = (obj_valid) | (acc_objstatus << 1) | (escc_watchdog_fail_count << 5);
+  dat[2] = (obj_valid) | (acc_objstatus << 1);
   dat[3] = (acc_obj_lat_pos_1);
   dat[4] = (acc_obj_lat_pos_2) | (acc_obj_dist_1 << 1);
   dat[5] = (acc_obj_dist_2) | (acc_obj_rel_spd_1 << 4);

@@ -78,16 +78,14 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     }
     // SCC12: Detect AEB, override and forward is_scc_msg
     if (addr == 1057) {
-      uint16_t dist_raw = (GET_BYTE(to_fwd, 2) | ((GET_BYTE(to_fwd, 3) & 0x07) << 8));
-      acc_obj_dist_1 = dist_raw & 0x7F;
-      acc_obj_dist_2 = dist_raw >> 7;
+      acc_obj_dist_1 = GET_BYTE(to_fwd, 2);
+      acc_obj_dist_2 = (GET_BYTE(to_fwd, 3) & 0x7U);
     }
     // SCC14: Forward radar points to sunnypilot/openpilot
     if (addr == 905) {
-      uint16_t lat_raw = (GET_BYTE(to_fwd, 2) | ((GET_BYTE(to_fwd, 3) & 0x01) << 8));
-      acc_obj_lat_pos_1 = lat_raw & 0xFF;
-      acc_obj_lat_pos_2 = (lat_raw >> 8) & 0x1;
-      acc_objstatus = (GET_BYTE(to_fwd, 6) >> 3) & 0x3U;
+      acc_obj_lat_pos_1 = GET_BYTE(to_fwd, 2);
+      acc_obj_lat_pos_2 = (GET_BYTE(to_fwd, 3) & 0x1U);
+      acc_objstatus = (GET_BYTE(to_fwd, 6) >> 3) & 0x7U;
     }
     // FCA11: Detect AEB, override and forward is_scc_msg
     if (addr == 909) {
