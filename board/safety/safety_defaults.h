@@ -44,8 +44,6 @@ uint8_t cr_vsm_deccmd_scc12 = 0;
 uint8_t cr_vsm_deccmd_fca11 = 0;
 uint8_t obj_valid = 0;
 uint8_t acc_objstatus = 0;
-uint8_t acc_obj_lat_pos_1 = 0;
-uint8_t acc_obj_lat_pos_2 = 0;
 uint8_t acc_obj_dist_1 = 0;
 uint8_t acc_obj_dist_2 = 0;
 uint8_t acc_obj_rel_spd_1 = 0;
@@ -103,7 +101,7 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
     uint32_t ts = TIM2->CNT;
     uint32_t ts_elapsed = get_ts_elapsed(ts, last_escc_send);
     if (ts_elapsed > 16000U) {
-      escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_lat_pos_1, acc_obj_lat_pos_2, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
+      escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
       last_escc_send = ts;
     }
 
