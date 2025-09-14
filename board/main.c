@@ -111,25 +111,20 @@ void debug_ring_callback(uart_ring *ring) {
 }
 
 void watchdog_check(void) {
-    uint32_t now = TIM2->CNT;
-    uint32_t ts_elapsed = get_ts_elapsed(now, last_escc_activity);
+  uint32_t now = TIM2->CNT;
+  uint32_t ts_elapsed = get_ts_elapsed(now, last_escc_activity);
 
-    if (ts_elapsed > ESCC_WATCHDOG_TIMEOUT) {
-        // Increment fail count
-        escc_watchdog_fail_count++;
+  if (ts_elapsed > ESCC_WATCHDOG_TIMEOUT) {
+    // Increment fail count
+    escc_watchdog_fail_count++;
 
-        // Attempt to recover CAN first
-        can_init_all();
-
-        // If ESCC still unresponsive after max retries, reset MCU
-        // if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
-        //     puts("ESCC unresponsive. Rebooting MCU...\n");
-        //     NVIC_SystemReset();  // full reset
-        // }
-    } else {
-        // ESCC is alive, reset counter
-        escc_watchdog_fail_count = 0;
+    if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
+      can_init_all();
     }
+  } else {
+    // ESCC is alive, reset counter
+    escc_watchdog_fail_count = 0;
+  }
 }
 
 void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11, uint8_t cf_vsm_warn_scc12, uint8_t cf_vsm_deccmdact_scc12, uint8_t cf_vsm_deccmdact_fca11, uint8_t cr_vsm_deccmd_scc12, uint8_t cr_vsm_deccmd_fca11,
