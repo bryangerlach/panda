@@ -774,6 +774,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       #endif
 
       watchdog_check();
+      escc_debug_message(0, escc_watchdog_fail_count, can_err_cnt);
 
       // Tick drivers
       fan_tick();
