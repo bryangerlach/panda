@@ -46,7 +46,9 @@ uint32_t last_escc_activity = 0;
 uint8_t escc_watchdog_fail_count = 0;
 #define ESCC_WATCHDOG_TIMEOUT 20000U  // ~50ms (adjust as needed)
 #define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
+#define CAN_ESCC_DEBUG 0x7E0
 void watchdog_check(void);
+void escc_debug_message(void);
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
@@ -108,6 +110,34 @@ void debug_ring_callback(uart_ring *ring) {
       current_board->set_usb_power_mode(USB_POWER_DCP);
     }
   }
+}
+
+void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_cnt) {
+  static uint32_t last_debug_ts = 0;
+  uint32_t ts = TIM2->CNT;
+  uint32_t ts_elapsed = get_ts_elapsed(ts, last_debug_ts);
+
+  if (ts_elapsed < 100000U) {  // 100 ms = 10 Hz
+    return;
+  }
+  last_debug_ts = ts;
+
+  uint8_t dat[8] = {0};
+  dat[0] = mode;                            // ESCC state/mode (0=normal, 1=silent, etc.)
+  dat[1] = watchdog_fails & 0xFF;           // lower byte of watchdog fails
+  dat[2] = (watchdog_fails >> 8) & 0xFF;    // upper byte
+  dat[3] = can_err_cnt & 0xFF;              // lower byte of CAN errors
+  dat[4] = (can_err_cnt >> 8) & 0xFF;       // upper byte
+  dat[5] = 0; // reserved for future
+  dat[6] = 0;
+  dat[7] = 0;
+
+  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+
+  CAN3->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+  CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+  CAN3->sTxMailBox[0].TDTR = 8;
+  CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG << 21) | CAN_TI0R_TXRQ;
 }
 
 void watchdog_check(void) {
