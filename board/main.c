@@ -148,9 +148,9 @@ void watchdog_check(void) {
     // Increment fail count
     escc_watchdog_fail_count++;
 
-    if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
-      can_init_all();
-    }
+    // if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
+    //   can_init_all();
+    // }
   } else {
     // ESCC is alive, reset counter
     escc_watchdog_fail_count = 0;
