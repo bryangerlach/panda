@@ -43,6 +43,7 @@
 extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 
 uint32_t last_escc_activity = 0;
+static uint8_t tx_mb = 0;
 uint8_t escc_watchdog_fail_count = 0;
 #define ESCC_WATCHDOG_TIMEOUT 20000U  // ~50ms (adjust as needed)
 #define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
@@ -171,13 +172,22 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   dat[6] = (acc_obj_rel_spd_2);
   dat[7] = (cr_vsm_deccmd_fca11);
 
-  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+  // Find the next free mailbox
+  const uint32_t tme_bits[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
 
-  CAN3->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
-  CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
-  CAN3->sTxMailBox[0].TDTR = 8;
-  CAN3->sTxMailBox[0].TIR = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
-  last_escc_activity = TIM2->CNT;
+  for (int i = 0; i < 3; i++) {
+    uint8_t mb = (tx_mb + i) % 3;
+    if (CAN3->TSR & tme_bits[mb]) {
+      CAN_TxMailBox_TypeDef *mbox = &CAN3->sTxMailBox[mb];
+      mbox->TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+      mbox->TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+      mbox->TDTR = 8;
+      mbox->TIR  = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
+      tx_mb = (mb + 1) % 3;  // rotate
+      last_escc_activity = TIM2->CNT;
+      return;
+    }
+  }
 }
 
 // ****************************** safety mode ******************************
@@ -774,7 +784,7 @@ void TIM1_BRK_TIM9_IRQ_Handler(void) {
       #endif
 
       watchdog_check();
-      escc_debug_message(0, escc_watchdog_fail_count, can_err_cnt);
+      escc_debug_message(current_safety_mode, escc_watchdog_fail_count, can_err_cnt);
 
       // Tick drivers
       fan_tick();
