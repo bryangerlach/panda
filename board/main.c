@@ -154,6 +154,13 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_
   CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
   CAN3->sTxMailBox[0].TDTR = 8;
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG << 21) | CAN_TI0R_TXRQ;
+
+  if ((CAN1->TSR & CAN_TSR_TME0) != 0) {
+    CAN1->sTxMailBox[0].TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+    CAN1->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+    CAN1->sTxMailBox[0].TDTR = 8;
+    CAN1->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG << 21) | CAN_TI0R_TXRQ;
+  }
 }
 
 void watchdog_check(void) {
