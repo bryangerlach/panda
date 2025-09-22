@@ -46,7 +46,7 @@ uint32_t last_escc_activity = 0;
 static uint8_t tx_mb = 0;
 uint8_t escc_watchdog_fail_count = 0;
 #define ESCC_WATCHDOG_TIMEOUT 20000U  // ~50ms (adjust as needed)
-#define ESCC_WATCHDOG_MAX_FAIL 1      // number of misses before MCU reset
+#define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
 #define CAN_ESCC_DEBUG 0x7E0
 void watchdog_check(void);
 void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_cnt);
@@ -115,6 +115,7 @@ void debug_ring_callback(uart_ring *ring) {
 
 void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_cnt) {
   static uint32_t last_debug_ts = 0;
+  static uint8_t fifo_overrun_count = 0;  // incrementing counter
   uint32_t ts = TIM2->CNT;
   uint32_t ts_elapsed = get_ts_elapsed(ts, last_debug_ts);
 
@@ -123,14 +124,28 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_
   }
   last_debug_ts = ts;
 
+  // Check CAN3 FIFO overruns
+  uint8_t fifo_overruns = 0;
+  if (CAN3->RF0R & CAN_RF0R_FOVR0) fifo_overruns |= 0x1;
+  if (CAN3->RF1R & CAN_RF1R_FOVR1) fifo_overruns |= 0x2;
+
+  // Increment counter if any new overrun
+  if (fifo_overruns) {
+    fifo_overrun_count++;
+  }
+
+  // Clear flags so we only report new overruns
+  CAN3->RF0R &= ~CAN_RF0R_FOVR0;
+  CAN3->RF1R &= ~CAN_RF1R_FOVR1;
+
   uint8_t dat[8] = {0};
-  dat[0] = mode;                            // ESCC state/mode (0=normal, 1=silent, etc.)
-  dat[1] = watchdog_fails & 0xFF;           // lower byte of watchdog fails
-  dat[2] = (watchdog_fails >> 8) & 0xFF;    // upper byte
-  dat[3] = can_err_cnt & 0xFF;              // lower byte of CAN errors
-  dat[4] = (can_err_cnt >> 8) & 0xFF;       // upper byte
-  dat[5] = 0; // reserved for future
-  dat[6] = 0;
+  dat[0] = mode;                            // ESCC state/mode
+  dat[1] = watchdog_fails & 0xFF;
+  dat[2] = (watchdog_fails >> 8) & 0xFF;
+  dat[3] = can_err_cnt & 0xFF;
+  dat[4] = (can_err_cnt >> 8) & 0xFF;
+  dat[5] = fifo_overruns;                   // FIFO overrun flags
+  dat[6] = fifo_overrun_count;              // FIFO overrun counter
   dat[7] = 0;
 
   if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
