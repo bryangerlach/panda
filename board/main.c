@@ -211,11 +211,11 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
     }
   }
   // Find the next free mailbox can 1
-  const uint32_t tme_bits[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
+  const uint32_t tme_bits2[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
 
   for (int i = 0; i < 3; i++) {
     uint8_t mb = (tx_mb + i) % 3;
-    if (CAN1->TSR & tme_bits[mb]) {
+    if (CAN1->TSR & tme_bits2[mb]) {
       CAN_TxMailBox_TypeDef *mbox = &CAN1->sTxMailBox[mb];
       mbox->TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
       mbox->TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
