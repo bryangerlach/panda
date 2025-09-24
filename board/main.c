@@ -194,7 +194,7 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   dat[6] = (acc_obj_rel_spd_2);
   dat[7] = (cr_vsm_deccmd_fca11);
 
-  // Find the next free mailbox
+  // Find the next free mailbox can 3
   const uint32_t tme_bits[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
 
   for (int i = 0; i < 3; i++) {
@@ -207,7 +207,23 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
       mbox->TIR  = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
       tx_mb = (mb + 1) % 3;  // rotate
       last_escc_activity = TIM2->CNT;
-      return;
+      break;
+    }
+  }
+  // Find the next free mailbox can 1
+  const uint32_t tme_bits[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
+
+  for (int i = 0; i < 3; i++) {
+    uint8_t mb = (tx_mb + i) % 3;
+    if (CAN1->TSR & tme_bits[mb]) {
+      CAN_TxMailBox_TypeDef *mbox = &CAN1->sTxMailBox[mb];
+      mbox->TDLR = dat[0] | (dat[1] << 8) | (dat[2] << 16) | (dat[3] << 24);
+      mbox->TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
+      mbox->TDTR = 8;
+      mbox->TIR  = (CAN_ESCC_OUTPUT << 21) | CAN_TI0R_TXRQ;
+      tx_mb = (mb + 1) % 3;  // rotate
+      last_escc_activity = TIM2->CNT;
+      break;
     }
   }
 }
