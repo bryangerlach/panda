@@ -45,7 +45,7 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 uint32_t last_escc_activity = 0;
 static uint8_t tx_mb = 0;
 uint8_t escc_watchdog_fail_count = 0;
-#define ESCC_WATCHDOG_TIMEOUT 15000U  // 20000U ~50ms (adjust as needed)
+#define ESCC_WATCHDOG_TIMEOUT 20000U  // 20000U ~50ms (adjust as needed)
 #define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
 #define CAN_ESCC_DEBUG 0x7E0
 void watchdog_check(void);
