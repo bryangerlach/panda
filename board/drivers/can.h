@@ -385,7 +385,7 @@ void can_rx(uint8_t can_number) {
   uint8_t bus_number = BUS_NUM_FROM_CAN_NUM(can_number);
   while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
     can_rx_cnt += 1;
-
+    
     // can is live
     pending_can_live = 1;
 
@@ -395,42 +395,51 @@ void can_rx(uint8_t can_number) {
     to_push.RDTR = CAN->sFIFOMailBox[0].RDTR;
     to_push.RDLR = CAN->sFIFOMailBox[0].RDLR;
     to_push.RDHR = CAN->sFIFOMailBox[0].RDHR;
-
+    
     // modify RDTR for our API
     to_push.RDTR = (to_push.RDTR & 0xFFFF000F) | (bus_number << 4);
 
-    // forwarding (panda only)
-    int bus_fwd_num = (can_forwarding[bus_number] != -1) ? can_forwarding[bus_number] : safety_fwd_hook(bus_number, &to_push);
-    if (bus_fwd_num != -1) {
-      CAN_FIFOMailBox_TypeDef to_send;
-      to_send.RIR = to_push.RIR | 1; // TXRQ
-      to_send.RDTR = to_push.RDTR;
-      to_send.RDLR = to_push.RDLR;
-      to_send.RDHR = to_push.RDHR;
-      int addr = GET_ADDR(&to_send);
-      if (addr == CAN_ESCC_INPUT) {
-        // softloader entry
-        if (GET_BYTES_04(&CAN->sFIFOMailBox[0]) == 0xdeadface) {
-          if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x0ab00b1e) {
-            enter_bootloader_mode = ENTER_SOFTLOADER_MAGIC;
-            NVIC_SystemReset();
-          } else if (GET_BYTES_48(&CAN->sFIFOMailBox[0]) == 0x02b00b1e) {
-            enter_bootloader_mode = ENTER_BOOTLOADER_MAGIC;
-            NVIC_SystemReset();
-          } else {
-            puts("Failed entering Softloader or Bootloader\n");
-          }
-        }
+    int addr = GET_ADDR(&to_push);
+
+    // Fast-forward path: everything except SCC11/12/14
+    if ((addr != 0x420) && (addr != 0x421) && (addr != 0x389)) {
+      int bus_fwd_num = (can_forwarding[bus_number] != -1) ? 
+                          can_forwarding[bus_number] : 
+                          bus_number == 0 ? 2 : (bus_number == 2 ? 0 : -1);
+
+      if (bus_fwd_num != -1) {
+        CAN_FIFOMailBox_TypeDef to_send;
+        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RDTR = to_push.RDTR;
+        to_send.RDLR = to_push.RDLR;
+        to_send.RDHR = to_push.RDHR;
+        can_send(&to_send, bus_fwd_num, true);
       }
-      can_send(&to_send, bus_fwd_num, true);
+    } else {
+      // Slow-path: run through normal safety / forward hook logic
+      int bus_fwd_num = (can_forwarding[bus_number] != -1) ? 
+                          can_forwarding[bus_number] : 
+                          safety_fwd_hook(bus_number, &to_push);
+
+      if (bus_fwd_num != -1) {
+        CAN_FIFOMailBox_TypeDef to_send;
+        to_send.RIR = to_push.RIR | 1; // TXRQ
+        to_send.RDTR = to_push.RDTR;
+        to_send.RDLR = to_push.RDLR;
+        to_send.RDHR = to_push.RDHR;
+        can_send(&to_send, bus_fwd_num, true);
+      }
     }
 
-    can_rx_errs += safety_rx_hook(&to_push) ? 0U : 1U;
-    ignition_can_hook(&to_push);
+    // Optional: only enqueue SCC messages (others don’t need to be queued)
+    if ((addr == 0x420) || (addr == 0x421) || (addr == 0x389)) {
+      can_rx_errs += safety_rx_hook(&to_push) ? 0U : 1U;
+      ignition_can_hook(&to_push);
+      can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
+    }
 
     current_board->set_led(LED_BLUE, true);
-    can_send_errs += can_push(&can_rx_q, &to_push) ? 0U : 1U;
-
+    
     // next
     CAN->RF0R |= CAN_RF0R_RFOM0;
   }
