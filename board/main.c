@@ -166,6 +166,8 @@ void watchdog_check(void) {
     escc_watchdog_fail_count++;
 
     if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
+      //can try can_clear(0) and can_clear(2)
+      //then can_init(0) and can_init(1)
       can_init_all();
     }
   } else {

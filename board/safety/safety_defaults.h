@@ -53,7 +53,7 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
-  int is_scc_msg = ((addr == 1056) || (addr == 1057) || (addr == 1290) || (addr == 905));  // SCC11 || SCC12 || SCC13 || SCC14
+  int is_scc_msg = ((addr == 1056) || (addr == 1057) || (addr == 905));  // SCC11 || SCC12 || SCC14
 
   if (bus_num == 0) {
     uint32_t ts = TIM2->CNT;
@@ -68,34 +68,17 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       sunnypilot_detected_last = ts;
     }
     bus_fwd = 2;
-  }
-  if (bus_num == 2) {
-    // SCC11: Forward radar points to sunnypilot/openpilot
-    // if (addr == 1056) {
-    //   obj_valid = (GET_BYTE(to_fwd, 7) >> 3) & 0x1U;
-    // }
-    // SCC12: Detect AEB, override and forward is_scc_msg
+  } else if (bus_num == 2) {
     if (addr == 1057) {
       acc_obj_dist_1 = GET_BYTE(to_fwd, 2);             //needs to be 8 bits
       acc_obj_dist_2 = (GET_BYTE(to_fwd, 3) & 0x7U);    //needs to be 3 bits
-    }
-    // SCC14: Forward radar points to sunnypilot/openpilot
-    if (addr == 905) {
+    } else if (addr == 905) {
       acc_obj_rel_spd_1 = GET_BYTE(to_fwd, 2);          //needs to be 8 bits
       acc_obj_rel_spd_2 = (GET_BYTE(to_fwd, 3) & 0x1U); //needs to be 1 bits
       //acc_objstatus = (GET_BYTE(to_fwd, 6) >> 3) & 0x7U;
-    }
-    // FCA11: Detect AEB, override and forward is_scc_msg
-    if (addr == 909) {
+    } else if (addr == 909) {
       fca_cmd_act = (GET_BYTE(to_fwd, 2) >> 3) & 0x1U;
       aeb_cmd_act = GET_BYTE(to_fwd, 2) & 0x1U;
-      //int8_t raw_deccmd = GET_BYTE(to_fwd, 6) & 0x7FU;
-      //cr_vsm_deccmd_fca11 = raw_deccmd - 127;
-      //uint8_t cf_vsm_warn_1 = (GET_BYTE(to_fwd, 6) >> 7) & 0x1U;
-      //uint8_t cf_vsm_warn_2 = (GET_BYTE(to_fwd, 7) >> 1) & 0x1U;
-      //uint8_t cf_vsm_warn_3 = (GET_BYTE(to_fwd, 7) >> 6) & 0x1U;
-      //cf_vsm_warn_fca11 = cf_vsm_warn_1 | cf_vsm_warn_2 | cf_vsm_warn_3;
-      //cf_vsm_deccmdact_fca11 = ((GET_BYTE(to_fwd, 4) >> 6) & 0x3U) | ((GET_BYTE(to_fwd, 5) & 0x7FU) << 2);
     }
 
     uint32_t ts = TIM2->CNT;
