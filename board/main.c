@@ -49,7 +49,7 @@ uint8_t escc_watchdog_fail_count = 0;
 #define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
 #define CAN_ESCC_DEBUG 0x7E0
 void watchdog_check(void);
-void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_cnt);
+void escc_debug_message(uint8_t mode, uint16_t watchdog_fails);
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
@@ -113,7 +113,7 @@ void debug_ring_callback(uart_ring *ring) {
   }
 }
 
-void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_cnt) {
+void escc_debug_message(uint8_t mode, uint16_t watchdog_fails) {
   static uint32_t last_debug_ts = 0;
   static uint8_t fifo_overrun_count = 0;  // incrementing counter
   uint32_t ts = TIM2->CNT;
@@ -780,7 +780,7 @@ uint8_t loop_counter = 0U;
 void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
     watchdog_check();
-    escc_debug_message(current_safety_mode, escc_watchdog_fail_count, can_err_cnt);
+    escc_debug_message(current_safety_mode, escc_watchdog_fail_count);
 
     // siren
     current_board->set_siren((loop_counter & 1U) && siren_enabled);
