@@ -140,10 +140,10 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails, uint16_t can_err_
 
   uint8_t dat[8] = {0};
   dat[0] = mode;                            // ESCC state/mode
-  dat[1] = watchdog_fails & 0xFF;
-  dat[2] = (watchdog_fails >> 8) & 0xFF;
-  dat[3] = can_err_cnt & 0xFF;
-  dat[4] = (can_err_cnt >> 8) & 0xFF;
+  dat[1] = watchdog_fails;
+  dat[2] = CAN3->ESR;
+  dat[3] = CAN3->TSR;
+  dat[4] = 0;
   dat[5] = fifo_overruns;                   // FIFO overrun flags
   dat[6] = fifo_overrun_count;              // FIFO overrun counter
   dat[7] = 0;
