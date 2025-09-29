@@ -50,7 +50,7 @@ uint8_t escc_watchdog_fail_count = 0;
 #define CAN_ESCC_DEBUG 0x7E0
 void watchdog_check(void);
 void escc_debug_message(uint8_t mode, uint16_t watchdog_fails);
-void can_flush_hw(CAN_TypeDef *CAN)
+void can_flush_hw(CAN_TypeDef *CAN);
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
