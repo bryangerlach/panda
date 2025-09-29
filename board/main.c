@@ -165,6 +165,11 @@ void watchdog_check(void) {
     // Increment fail count
     escc_watchdog_fail_count++;
 
+    if (escc_watchdog_fail_count == 1) {
+      can_clear(can_queues[0]);
+      can_clear(can_queues[2]);
+    }
+
     if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
       //can try can_clear(0) and can_clear(2)
       //then can_init(0) and can_init(1)
