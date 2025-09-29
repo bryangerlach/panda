@@ -50,6 +50,7 @@ uint8_t escc_watchdog_fail_count = 0;
 #define CAN_ESCC_DEBUG 0x7E0
 void watchdog_check(void);
 void escc_debug_message(uint8_t mode, uint16_t watchdog_fails);
+void can_flush_hw(CAN_TypeDef *CAN)
 
 struct __attribute__((packed)) health_t {
   uint32_t uptime_pkt;
@@ -143,10 +144,10 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails) {
   dat[1] = watchdog_fails;
   dat[2] = CAN3->ESR;
   dat[3] = CAN3->TSR;
-  dat[4] = 0;
+  dat[4] = (can_queues[0]->w_ptr - can_queues[0]->r_ptr) % can_queues[0]->fifo_size;
   dat[5] = fifo_overruns;                   // FIFO overrun flags
   dat[6] = fifo_overrun_count;              // FIFO overrun counter
-  dat[7] = 0;
+  dat[7] = (can_queues[2]->w_ptr - can_queues[2]->r_ptr) % can_queues[2]->fifo_size;
 
   if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
 
@@ -155,6 +156,17 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails) {
   CAN3->sTxMailBox[0].TDTR = 8;
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG << 21) | CAN_TI0R_TXRQ;
 
+}
+
+void can_flush_hw(CAN_TypeDef *CAN) {
+  // Flush FIFO0
+  while ((CAN->RF0R & CAN_RF0R_FMP0) != 0) {
+    CAN->RF0R |= CAN_RF0R_RFOM0;  // release oldest message
+  }
+  // Flush FIFO1
+  while ((CAN->RF1R & CAN_RF1R_FMP1) != 0) {
+    CAN->RF1R |= CAN_RF1R_RFOM1;  // release oldest message
+  }
 }
 
 void watchdog_check(void) {
@@ -168,6 +180,9 @@ void watchdog_check(void) {
     if (escc_watchdog_fail_count == 1) {
       can_clear(can_queues[0]);
       can_clear(can_queues[2]);
+      can_flush_hw(CAN1);
+      can_flush_hw(CAN2);
+      can_flush_hw(CAN3);
     }
 
     if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
