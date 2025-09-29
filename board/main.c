@@ -139,15 +139,17 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails) {
   CAN3->RF0R &= ~CAN_RF0R_FOVR0;
   CAN3->RF1R &= ~CAN_RF1R_FOVR1;
 
+  uint32_t can3_queue = (can_queues[2]->w_ptr - can_queues[2]->r_ptr) % can_queues[2]->fifo_size;
+
   uint8_t dat[8] = {0};
   dat[0] = mode;                            // ESCC state/mode
   dat[1] = watchdog_fails;
   dat[2] = CAN3->ESR;
   dat[3] = CAN3->TSR;
-  dat[4] = (can_queues[0]->w_ptr - can_queues[0]->r_ptr) % can_queues[0]->fifo_size;
-  dat[5] = fifo_overruns;                   // FIFO overrun flags
-  dat[6] = fifo_overrun_count;              // FIFO overrun counter
-  dat[7] = (can_queues[2]->w_ptr - can_queues[2]->r_ptr) % can_queues[2]->fifo_size;
+  dat[4] = fifo_overruns;                   // FIFO overrun flags
+  dat[5] = fifo_overrun_count;              // FIFO overrun counter
+  dat[6] = can3_queue & 0xFF;
+  dat[7] = (can3_queue >> 8) & 0xFF;
 
   if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
 
