@@ -57,7 +57,7 @@ int can_live = 0, pending_can_live = 0, can_loopback = 0, can_silent = ALL_CAN_S
 can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x100)
 can_buffer(tx2_q, 0x100)
-can_buffer(tx3_q, 0x300)
+can_buffer(tx3_q, 0x600)
 can_buffer(txgmlan_q, 0x100)
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
