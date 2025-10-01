@@ -49,7 +49,11 @@ uint8_t acc_obj_dist_2 = 0;
 uint8_t acc_obj_rel_spd_1 = 0;
 uint8_t acc_obj_rel_spd_2 = 0;
 
+uint32_t fwd_hook_call_count = 0;
+
 static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
+
+  fwd_hook_call_count++;
   int bus_fwd = -1;
   int addr = GET_ADDR(to_fwd);
 
@@ -81,9 +85,13 @@ static int default_fwd_hook(int bus_num, CAN_FIFOMailBox_TypeDef *to_fwd) {
       aeb_cmd_act = GET_BYTE(to_fwd, 2) & 0x1U;
     }
 
+    // Only send ESCC at 50Hz (every 20ms = 20000 microseconds)
     uint32_t ts = TIM2->CNT;
-    escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
-    last_escc_send = ts;
+    uint32_t ts_elapsed = get_ts_elapsed(ts, last_escc_send);
+    if (ts_elapsed >= 20000U) {  // 20ms = 20000 microseconds
+      escc_id(fca_cmd_act, aeb_cmd_act, cf_vsm_warn_fca11, cf_vsm_warn_scc12, cf_vsm_deccmdact_scc12, cf_vsm_deccmdact_fca11, cr_vsm_deccmd_scc12, cr_vsm_deccmd_fca11, obj_valid, acc_objstatus, acc_obj_dist_1, acc_obj_dist_2, acc_obj_rel_spd_1, acc_obj_rel_spd_2);
+      last_escc_send = ts;
+    }
 
     int block_msg = (block && is_scc_msg);
     if (!block_msg) {
