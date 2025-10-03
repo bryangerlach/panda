@@ -185,6 +185,8 @@ void watchdog_check(void) {
       can_flush_hw(CAN1);
       can_flush_hw(CAN2);
       can_flush_hw(CAN3);
+    } else if (escc_watchdog_fail_count == 3) {
+      can_init(2U)
     }
 
     if (escc_watchdog_fail_count >= ESCC_WATCHDOG_MAX_FAIL) {
