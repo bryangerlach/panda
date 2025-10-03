@@ -58,7 +58,7 @@ can_buffer(rx_q, 0x1000)
 can_buffer(tx1_q, 0x200)
 can_buffer(tx2_q, 0x100)
 can_buffer(tx3_q, 0x200)
-can_buffer(txgmlan_q, 0x200)
+can_buffer(txgmlan_q, 0x100)
 can_ring *can_queues[] = {&can_tx1_q, &can_tx2_q, &can_tx3_q, &can_txgmlan_q};
 
 // global CAN stats
