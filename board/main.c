@@ -45,6 +45,8 @@ extern int _app_start[0xc000]; // Only first 3 sectors of size 0x4000 are used
 uint32_t last_escc_activity = 0;
 static uint8_t tx_mb = 0;
 uint8_t escc_watchdog_fail_count = 0;
+static uint32_t escc_all_full_start = 0;
+static bool escc_was_all_full = false;
 #define ESCC_WATCHDOG_TIMEOUT 20000U  // 20000U ~50ms (adjust as needed)
 #define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
 #define CAN_ESCC_DEBUG 0x7E0
@@ -211,6 +213,26 @@ void escc_id(uint8_t fca_cmd_act, uint8_t aeb_cmd_act, uint8_t cf_vsm_warn_fca11
   dat[5] = (acc_obj_rel_spd_1);
   dat[6] = (acc_obj_rel_spd_2);
   dat[7] = (cr_vsm_deccmd_fca11);
+
+  uint32_t tsr = CAN3->TSR;
+  bool all_full = !(tsr & (CAN_TSR_TME0 | CAN_TSR_TME1 | CAN_TSR_TME2));
+  
+  if (all_full) {
+    if (!escc_was_all_full) {
+      escc_all_full_start = TIM2->CNT;
+      escc_was_all_full = true;
+    } else {
+      uint32_t full_duration = get_ts_elapsed(TIM2->CNT, escc_all_full_start);
+      if (full_duration > 10000U) {  // Full for > 10ms is abnormal
+        // Abort all pending transmissions
+        CAN3->TSR |= (CAN_TSR_ABRQ0 | CAN_TSR_ABRQ1 | CAN_TSR_ABRQ2);
+        escc_was_all_full = false;
+      }
+    }
+    return;
+  } else {
+    escc_was_all_full = false;
+  }
 
   // Find the next free mailbox can 3
   const uint32_t tme_bits[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
