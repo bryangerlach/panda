@@ -256,7 +256,7 @@ void can1_error_recovery(void) {
       for(volatile int i = 0; i < 10000; i++);
       
       // Reinit CAN1 to reset error counters
-      can_init(CAN1);
+      can_init(0);
     }
   }
 }
