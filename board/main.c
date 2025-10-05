@@ -180,20 +180,31 @@ void escc_debug_message2(void) {
 
   uint8_t debug_dat[8];
 
-  // Pack CAN1 TSR (32 bits = 4 bytes)
   uint32_t can1_tsr = CAN1->TSR;
+  uint32_t can1_esr = CAN1->ESR;
+  
+  // Byte 0-3: CAN1 TSR (all mailbox status)
   debug_dat[0] = (can1_tsr) & 0xFFU;
   debug_dat[1] = (can1_tsr >> 8) & 0xFFU;
   debug_dat[2] = (can1_tsr >> 16) & 0xFFU;
   debug_dat[3] = (can1_tsr >> 24) & 0xFFU;
+  
+  // Byte 4: CAN1 TX Error Counter (TEC)
+  debug_dat[4] = (can1_esr >> 16) & 0xFFU;
+  
+  // Byte 5: CAN1 RX Error Counter (REC)
+  debug_dat[5] = (can1_esr >> 24) & 0xFFU;
+  
+  // Byte 6: CAN1 Error flags
+  // Bit 0: EWGF (Error Warning)
+  // Bit 1: EPVF (Error Passive)
+  // Bit 2: BOFF (Bus Off)
+  debug_dat[6] = (can1_esr & 0x7U);
+  
+  // Byte 7: CAN1 Last Error Code (LEC)
+  debug_dat[7] = (can1_esr >> 4) & 0x7U;
 
-  // Pack CAN3 TSR (32 bits = 4 bytes)
-  uint32_t can3_tsr = CAN3->TSR;
-  debug_dat[4] = (can3_tsr) & 0xFFU;
-  debug_dat[5] = (can3_tsr >> 8) & 0xFFU;
-  debug_dat[6] = (can3_tsr >> 16) & 0xFFU;
-  debug_dat[7] = (can3_tsr >> 24) & 0xFFU;
-
+  // Find any available mailbox on CAN3
   const uint32_t tme_bits[3] = { CAN_TSR_TME0, CAN_TSR_TME1, CAN_TSR_TME2 };
   for (int i = 0; i < 3; i++) {
     if (CAN3->TSR & tme_bits[i]) {
