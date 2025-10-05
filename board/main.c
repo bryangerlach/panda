@@ -159,20 +159,24 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails) {
   CAN3->sTxMailBox[0].TDTR = 8;
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG << 21) | CAN_TI0R_TXRQ;
 
-  uint8_t debug2_dat[8];
-  debug2_dat[0] = (CAN3->TSR) & 0xFFU;
-  debug2_dat[1] = (CAN3->TSR >> 8) & 0xFFU;
-  debug2_dat[2] = (CAN3->TSR >> 16) & 0xFFU;
-  debug2_dat[3] = (CAN3->TSR >> 24) & 0xFFU;
-  debug2_dat[4] = (CAN1->ESR) & 0xFFU;        // Error status
-  debug2_dat[5] = (CAN1->ESR >> 8) & 0xFFU;
-  debug2_dat[6] = (CAN3->ESR) & 0xFFU;
-  debug2_dat[7] = (CAN3->ESR >> 8) & 0xFFU;
+  uint8_t debug_dat[8];
 
-  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+  // Pack CAN1 TSR (32 bits = 4 bytes)
+  uint32_t can1_tsr = CAN1->TSR;
+  debug_dat[0] = (can1_tsr) & 0xFFU;
+  debug_dat[1] = (can1_tsr >> 8) & 0xFFU;
+  debug_dat[2] = (can1_tsr >> 16) & 0xFFU;
+  debug_dat[3] = (can1_tsr >> 24) & 0xFFU;
 
-  CAN3->sTxMailBox[0].TDLR = debug2_dat[0] | (debug2_dat[1] << 8) | (debug2_dat[2] << 16) | (debug2_dat[3] << 24);
-  CAN3->sTxMailBox[0].TDHR = debug2_dat[4] | (debug2_dat[5] << 8) | (debug2_dat[6] << 16) | (debug2_dat[7] << 24);
+  // Pack CAN3 TSR (32 bits = 4 bytes)
+  uint32_t can3_tsr = CAN3->TSR;
+  debug_dat[4] = (can3_tsr) & 0xFFU;
+  debug_dat[5] = (can3_tsr >> 8) & 0xFFU;
+  debug_dat[6] = (can3_tsr >> 16) & 0xFFU;
+  debug_dat[7] = (can3_tsr >> 24) & 0xFFU;
+
+  CAN3->sTxMailBox[0].TDLR = debug_dat[0] | (debug_dat[1] << 8) | (debug_dat[2] << 16) | (debug_dat[3] << 24);
+  CAN3->sTxMailBox[0].TDHR = debug_dat[4] | (debug_dat[5] << 8) | (debug_dat[6] << 16) | (debug_dat[7] << 24);
   CAN3->sTxMailBox[0].TDTR = 8;
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG2 << 21) | CAN_TI0R_TXRQ;
 
