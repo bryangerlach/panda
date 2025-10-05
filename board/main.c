@@ -50,6 +50,7 @@ uint8_t escc_watchdog_fail_count = 0;
 #define CAN_ESCC_DEBUG 0x7E0
 #define CAN_ESCC_DEBUG2 0x7E1
 void watchdog_check(void);
+void can1_error_recovery(void);
 void escc_debug_message(uint8_t mode, uint16_t watchdog_fails);
 void escc_debug_message2(void);
 void can_flush_hw(CAN_TypeDef *CAN);
@@ -226,6 +227,37 @@ void can_flush_hw(CAN_TypeDef *CAN) {
   // Flush FIFO1
   while ((CAN->RF1R & CAN_RF1R_FMP1) != 0) {
     CAN->RF1R |= CAN_RF1R_RFOM1;  // release oldest message
+  }
+}
+
+void can1_error_recovery(void) {
+  static uint32_t last_check = 0;
+  uint32_t ts = TIM2->CNT;
+  
+  if (get_ts_elapsed(ts, last_check) < 50000U) {  // Check every 50ms
+    return;
+  }
+  last_check = ts;
+  
+  uint32_t can1_esr = CAN1->ESR;
+  uint8_t tx_err_cnt = (can1_esr >> 16) & 0xFFU;
+  uint8_t lec = (can1_esr >> 4) & 0x7U;
+  
+  // If we're in error passive (TEC >= 128) or have ACK errors
+  if (tx_err_cnt >= 128 || lec == 3) {
+    // Clear the last error code
+    CAN1->ESR &= ~(0x7U << 4);
+    
+    // If in error passive, abort stuck transmissions
+    if (tx_err_cnt >= 128) {
+      CAN1->TSR |= (CAN_TSR_ABRQ0 | CAN_TSR_ABRQ1 | CAN_TSR_ABRQ2);
+      
+      // Small delay
+      for(volatile int i = 0; i < 10000; i++);
+      
+      // Reinit CAN1 to reset error counters
+      can_init(CAN1);
+    }
   }
 }
 
@@ -860,6 +892,7 @@ uint8_t loop_counter = 0U;
 void TIM1_BRK_TIM9_IRQ_Handler(void) {
   if (TIM9->SR != 0) {
     watchdog_check();
+    can1_error_recovery();
     escc_debug_message(current_safety_mode, escc_watchdog_fail_count);
     escc_debug_message2();
 
