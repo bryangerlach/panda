@@ -48,6 +48,7 @@ uint8_t escc_watchdog_fail_count = 0;
 #define ESCC_WATCHDOG_TIMEOUT 20000U  // 20000U ~50ms (adjust as needed)
 #define ESCC_WATCHDOG_MAX_FAIL 5      // number of misses before MCU reset
 #define CAN_ESCC_DEBUG 0x7E0
+#define CAN_ESCC_DEBUG2 0x7E1
 void watchdog_check(void);
 void escc_debug_message(uint8_t mode, uint16_t watchdog_fails);
 void can_flush_hw(CAN_TypeDef *CAN);
@@ -157,6 +158,23 @@ void escc_debug_message(uint8_t mode, uint16_t watchdog_fails) {
   CAN3->sTxMailBox[0].TDHR = dat[4] | (dat[5] << 8) | (dat[6] << 16) | (dat[7] << 24);
   CAN3->sTxMailBox[0].TDTR = 8;
   CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG << 21) | CAN_TI0R_TXRQ;
+
+  uint8_t debug2_dat[8];
+  debug2_dat[0] = (CAN3->TSR) & 0xFFU;
+  debug2_dat[1] = (CAN3->TSR >> 8) & 0xFFU;
+  debug2_dat[2] = (CAN3->TSR >> 16) & 0xFFU;
+  debug2_dat[3] = (CAN3->TSR >> 24) & 0xFFU;
+  debug2_dat[4] = (CAN1->ESR) & 0xFFU;        // Error status
+  debug2_dat[5] = (CAN1->ESR >> 8) & 0xFFU;
+  debug2_dat[6] = (CAN3->ESR) & 0xFFU;
+  debug2_dat[7] = (CAN3->ESR >> 8) & 0xFFU;
+
+  if ((CAN3->TSR & CAN_TSR_TME0) == 0) return;  // skip if busy
+
+  CAN3->sTxMailBox[0].TDLR = debug2_dat[0] | (debug2_dat[1] << 8) | (debug2_dat[2] << 16) | (debug2_dat[3] << 24);
+  CAN3->sTxMailBox[0].TDHR = debug2_dat[4] | (debug2_dat[5] << 8) | (debug2_dat[6] << 16) | (debug2_dat[7] << 24);
+  CAN3->sTxMailBox[0].TDTR = 8;
+  CAN3->sTxMailBox[0].TIR = (CAN_ESCC_DEBUG2 << 21) | CAN_TI0R_TXRQ;
 
 }
 
